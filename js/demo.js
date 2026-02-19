@@ -15,9 +15,9 @@
 // d3.selectAll() finds ALL elements (like querySelectorAll)
 
 d3.select('#demo-1')
-    .style('color', 'blue')
+    .style('color', 'purple')
     .style('font-size', '20px')
-    .text('This text was changed by D3!');
+    .text('This text was changed by Chenxi Jiang!');
 
 // TODO: change the text above to add your name
 // TODO: change the color to something else you like // keep in mind color contrast
@@ -30,6 +30,10 @@ d3.select('#demo-1')
     .style('background-color', 'lightgray');
 
 // TODO: append a new element with your favorite food and style it with a different background color
+d3.select('#demo-1')
+    .append('p')
+    .text('My favorite food is pizza')
+    .style('background-color', 'green');
 
 // ============================================================================
 // SECTION 2: DATA BINDING - The Core D3 Pattern 
@@ -59,8 +63,28 @@ d3.select('#demo-2')
 
 
 // TODO: sample electricity prices instead of gas and create rectangles instead of circles; make the color of the rectangles green;
-const electricityPrices = sampledData.map(item => parseFloat(item.elec));
-// YOUR CODE GOES HERE 
+const electricityPrices = sampledData.map(item => parseFloat(item.elec));;
+
+const w = 400, h = 100;
+const xStep = 60;
+
+const yScale = d3.scaleLinear()
+  .domain([0, d3.max(electricityPrices)])
+  .range([0, h - 10]);
+
+d3.select('#demo-2')
+  .append('svg')
+  .attr('width', w)
+  .attr('height', h)
+  .selectAll('rect')
+  .data(electricityPrices)
+  .join('rect')
+  .attr('x', (d, i) => i * xStep + 30)
+  .attr('width', 30)
+  .attr('y', d => h - yScale(d))
+  .attr('height', d => yScale(d))
+  .attr('fill', 'green');
+
 
 // Remember that circle needs radius (r) and center (cx, cy) to create it,
 // while rectangles need x, y, width, and height. You can use the electricity price to determine the height of the rectangle and set a fixed width.
@@ -201,22 +225,75 @@ const hBarWidth = 400 - hBarMargin.left - hBarMargin.right;
 const hBarHeight = 500 - hBarMargin.top - hBarMargin.bottom;
 
 // Create SVG for horizontal bar chart
+const hBarSvg = d3.select('#demo-4')
+  .append('svg')
+  .attr('width', hBarWidth + hBarMargin.left + hBarMargin.right)
+  .attr('height', hBarHeight + hBarMargin.top + hBarMargin.bottom)
+  .append('g')
+  .attr('transform', `translate(${hBarMargin.left}, ${hBarMargin.top})`);
 
 
 // Create scales for the horizontal bar chart
+// Y scale: states (categorical)
+const yHBarScale = d3.scaleBand()
+  .domain(top15Gas.map(d => d.state))
+  .range([0, hBarHeight])
+  .padding(0.25);
+
+// X scale: gas price (linear)
+const xHBarScale = d3.scaleLinear()
+  .domain([0, d3.max(top15Gas, d => d.gas)])
+  .range([0, hBarWidth]);
 
 
 // Create axes and append them to the svg
+// Y axis (states)
+hBarSvg.append('g')
+  .call(d3.axisLeft(yHBarScale));
+
+// X axis (gas price)
+hBarSvg.append('g')
+  .attr('transform', `translate(0, ${hBarHeight})`)
+  .call(d3.axisBottom(xHBarScale).ticks(5).tickFormat(d => `$${d.toFixed(2)}`));
 
 
 // Create and append bars to the chart
+hBarSvg.selectAll('rect')
+  .data(top15Gas)
+  .join('rect')
+  .attr('y', d => yHBarScale(d.state))
+  .attr('x', 0)
+  .attr('height', yHBarScale.bandwidth())
+  .attr('width', d => xHBarScale(d.gas))
+  .attr('fill', 'orange');
 
 
 // Chart title
+hBarSvg.append('text')
+  .attr('x', hBarWidth / 2)
+  .attr('y', -10)
+  .attr('text-anchor', 'middle')
+  .style('font-size', '16px')
+  .style('font-weight', 'bold')
+  .text('Top 15 States by Gas Price');
 
 
 // X axis label
+hBarSvg.append('text')
+  .attr('x', hBarWidth / 2)
+  .attr('y', hBarHeight + 50)
+  .attr('text-anchor', 'middle')
+  .style('font-size', '12px')
+  .text('Gas Price (per gallon)');
 
+// Y axis label
+hBarSvg.append('text')
+  .attr('transform', 'rotate(-90)')
+  .attr('x', -hBarHeight / 2)
+  .attr('y', -120)
+  .attr('text-anchor', 'middle')
+  .style('font-size', '12px')
+  .text('State');
 
 // ============================================================================
 // SECTION 5:  LINE CHART 
@@ -325,4 +402,28 @@ lineData.forEach((region, i) => {
 // Add title and axis label 
 // Do it yourself! Hint: look back at the bar chart code for how to add text elements for the title and axis labels.
 
+// Title
+lineSvg.append('text')
+  .attr('x', lineWidth / 2)
+  .attr('y', -10)
+  .attr('text-anchor', 'middle')
+  .style('font-size', '16px')
+  .style('font-weight', 'bold')
+  .text('Electricity Prices Over Time by Region');
 
+// X axis label
+lineSvg.append('text')
+  .attr('x', lineWidth / 2)
+  .attr('y', lineHeight + 55)
+  .attr('text-anchor', 'middle')
+  .style('font-size', '12px')
+  .text('Year');
+
+// Y axis label
+lineSvg.append('text')
+  .attr('transform', 'rotate(-90)')
+  .attr('x', -lineHeight / 2)
+  .attr('y', -55)
+  .attr('text-anchor', 'middle')
+  .style('font-size', '12px')
+  .text('Electricity Price');
